@@ -56,7 +56,7 @@ NVCC_VERSION = '10.1'
 # Environment variable for supported TF CUDA Compute Capabilities
 # eg. export TF_CUDA_COMPUTE_CAPABILITIES=3.5,3.7,5.2,6.0,6.1,7.0
 CUDA_COMPUTE_ENV_VAR = 'TF_CUDA_COMPUTE_CAPABILITIES'
-DEFAULT_CUDA_COMPUTE_CAPABILITIES = '3.5,6.0'
+DEFAULT_CUDA_COMPUTE_CAPABILITIES = '6.0,6.1,7.0,7.5'
 
 def Log(s):
   print('gpus/crosstool: {0}'.format(s))
@@ -208,6 +208,7 @@ def InvokeNvcc(argv, log=False):
   out = ' -o ' + out_file[0]
 
   supported_cuda_compute_capabilities = os.environ.get(CUDA_COMPUTE_ENV_VAR, DEFAULT_CUDA_COMPUTE_CAPABILITIES).split(',')
+  print('supported_cuda_compute_capabilities:%s' % supported_cuda_compute_capabilities)
   nvccopts = '-D_FORCE_INLINES '
   for capability in supported_cuda_compute_capabilities:
     capability = capability.replace('.', '')
