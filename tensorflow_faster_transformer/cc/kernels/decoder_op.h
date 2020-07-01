@@ -15,11 +15,11 @@
  */
 #pragma once
 
-#ifndef TENSORFLOW_CORE_KERNELS_MULTIHEADATTR_OP_H_
-#define TENSORFLOW_CORE_KERNELS_MULTIHEADATTR_OP_H_
+#ifndef TENSORFLOW_CORE_KERNELS_DECODER_OP_H_
+#define TENSORFLOW_CORE_KERNELS_DECODER_OP_H_
 
 #include "../common.h"
-#include "../opennmt_encoder_transformer.h"
+#include "../open_decoder.h"
 #include "../ops/tf_traits.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/types.h"
@@ -27,19 +27,24 @@
 #include "tensorflow/core/lib/core/errors.h"
 #include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
 #include <cublas_v2.h>
+
 using namespace fastertransformer;
 namespace tensorflow
 {
   namespace functor
   {
     template <typename Device, typename T>
-    struct OpenNmtTransformerOpFunctor
+    struct DecoderOpFunctor
     {
       typedef typename TFTraits<T>::DataType DataType_;
-      static Status Compute(OpKernelContext *context,
-        EncoderInitParam<DataType_ > param,
-        OpenNmtEncoderTransformer<OpenNmtEncoderTransformerTraits< TFTraits<T>::OpType,
-          cuda::OpenMultiHeadAttention > > *encoding);
+      static Status DynamicDecode(OpKernelContext *context,
+        DecoderInitParam<DataType_ > param, 
+        OpenDecoder<TFTraits<T>::OpType> *decoder, DataType_ *decoder_buffer,
+        const DataType_ *from_tensor, const DataType_ *memory_tensor, 
+        DataType_ *key_cache, DataType_ *value_cache, 
+        DataType_ *key_mem_cache, DataType_ *value_mem_cache, 
+        const int* memory_sequence_length,
+        DataType_ *decoder_output, const int step);
     };
   } //namespace functor
 } //namespace tensorflow

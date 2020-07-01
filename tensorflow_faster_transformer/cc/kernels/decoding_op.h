@@ -15,11 +15,12 @@
  */
 #pragma once
 
-#ifndef TENSORFLOW_CORE_KERNELS_MULTIHEADATTR_OP_H_
-#define TENSORFLOW_CORE_KERNELS_MULTIHEADATTR_OP_H_
+#ifndef TENSORFLOW_CORE_KERNELS_DECODING_OP_H_
+#define TENSORFLOW_CORE_KERNELS_DECODING_OP_H_
 
 #include "../common.h"
-#include "../opennmt_encoder_transformer.h"
+#include "../open_decoder.h"
+#include "../decoding_opennmt.h"
 #include "../ops/tf_traits.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/types.h"
@@ -27,19 +28,23 @@
 #include "tensorflow/core/lib/core/errors.h"
 #include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
 #include <cublas_v2.h>
+
 using namespace fastertransformer;
 namespace tensorflow
 {
   namespace functor
   {
     template <typename Device, typename T>
-    struct OpenNmtTransformerOpFunctor
+    struct DecodingOpFunctor
     {
       typedef typename TFTraits<T>::DataType DataType_;
-      static Status Compute(OpKernelContext *context,
-        EncoderInitParam<DataType_ > param,
-        OpenNmtEncoderTransformer<OpenNmtEncoderTransformerTraits< TFTraits<T>::OpType,
-          cuda::OpenMultiHeadAttention > > *encoding);
+      static Status DynamicDecode(
+        OpKernelContext *context,
+        const int num_layers,
+        DecoderInitParam<DataType_ > *params, 
+        DecodingOpenNMT<TFTraits<T>::OpType> *decoding_opennmt,
+        const int max_seq_len,
+        DecodingInitParam<DataType_> decoding_params);
     };
   } //namespace functor
 } //namespace tensorflow

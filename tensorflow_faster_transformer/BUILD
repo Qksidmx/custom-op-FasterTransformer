@@ -34,22 +34,24 @@ cc_library(
     name = "fastertransformer",
     srcs = [
         "cc/cuda/cuda_kernels.cu.cc", "cc/cuda/open_attention.cu.cc",
+        "cc/cuda/open_decoder.cu.cc", "cc/cuda/decoding_kernel_check.cu.cc"
     ],
     hdrs = [
         "cc/common.h",
         "cc/common_structure.h",
         "cc/utils.h",
         "cc/allocator.h",
+        "cc/open_decoder.h",
         "cc/cuda/open_attention.h",
         "cc/cuda/multi_head_attention.h",
         "cc/cuda/cuda_kernels.h",
+        "cc/cuda/decoding_kernel_check.h",
     ],
     deps = [
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
     ] + if_cuda_is_configured([":cuda", "@local_config_cuda//cuda:cuda_headers", "@local_config_cuda//cuda:cublas_headers"]),
     alwayslink = 1,
-    linkopts = [],
     copts = select({
         ":windows": ["/D__CLANG_SUPPORT_DYN_ANNOTATION__", "/DEIGEN_MPL2_ONLY", "/DEIGEN_MAX_ALIGN_BYTES=64", "/DEIGEN_HAS_TYPE_TRAITS=0", "/DTF_USE_SNAPPY", "/showIncludes", "/MD", "/O2", "/DNDEBUG", "/w", "-DWIN32_LEAN_AND_MEAN", "-DNOGDI", "/d2ReducedOptimizeHugeFunctions", "/arch:AVX", "/std:c++14", "-DTENSORFLOW_MONOLITHIC_BUILD", "/DPLATFORM_WINDOWS", "/DEIGEN_HAS_C99_MATH", "/DTENSORFLOW_USE_EIGEN_THREADPOOL", "/DEIGEN_AVOID_STL_ARRAY", "/Iexternal/gemmlowp", "/wd4018", "/wd4577", "/DNOGDI", "/UTF_COMPILE_LIBRARY"],
         "//conditions:default": ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0"],
@@ -62,11 +64,11 @@ cc_library(
         "cc/kernels/bert_transformer_op.cu.cc",
     ],
     hdrs = [
-        "cc/tf_traits.h",
         "cc/faster_transformer.h",
         "cc/bert_encoder_transformer.h",
         "cc/open_decoder.h",
         "cc/ops/common_op.h",
+        "cc/ops/tf_traits.h",
         "cc/kernels/bert_transformer_op.h",
         "cc/kernels/decoder_op.h",
     ],
@@ -89,13 +91,13 @@ cc_library(
         "cc/kernels/opennmt_transformer_op.cu.cc",
     ],
     hdrs = [
-        "cc/tf_traits.h",
         "cc/faster_transformer.h",
         #Included for `EncoderInitParam`
         "cc/bert_encoder_transformer.h",
         "cc/opennmt_encoder_transformer.h",
         "cc/open_decoder.h",
         "cc/ops/common_op.h",
+        "cc/ops/tf_traits.h",
         "cc/kernels/opennmt_transformer_op.h",
         "cc/kernels/decoder_op.h",
     ],
@@ -105,7 +107,6 @@ cc_library(
         "@local_config_tf//:tf_header_lib",
     ] + if_cuda_is_configured([":cuda",  "@local_config_cuda//cuda:cuda_headers",  "@local_config_cuda//cuda:cublas_headers"]),
     alwayslink = 1,
-    linkopts = [],
     copts = select({
         ":windows": ["/D__CLANG_SUPPORT_DYN_ANNOTATION__", "/DEIGEN_MPL2_ONLY", "/DEIGEN_MAX_ALIGN_BYTES=64", "/DEIGEN_HAS_TYPE_TRAITS=0", "/DTF_USE_SNAPPY", "/showIncludes", "/MD", "/O2", "/DNDEBUG", "/w", "-DWIN32_LEAN_AND_MEAN", "-DNOGDI", "/d2ReducedOptimizeHugeFunctions", "/arch:AVX", "/std:c++14", "-DTENSORFLOW_MONOLITHIC_BUILD", "/DPLATFORM_WINDOWS", "/DEIGEN_HAS_C99_MATH", "/DTENSORFLOW_USE_EIGEN_THREADPOOL", "/DEIGEN_AVOID_STL_ARRAY", "/Iexternal/gemmlowp", "/wd4018", "/wd4577", "/DNOGDI", "/UTF_COMPILE_LIBRARY"],
         "//conditions:default": ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0"],
@@ -171,3 +172,78 @@ py_library(
     ],
     srcs_version = "PY2AND3",
 )
+
+cc_library(
+    name = "decoder_ops_gpu",
+    srcs = [
+        "cc/kernels/decoder_op.cu.cc",
+    ],
+    hdrs = [
+        "cc/faster_transformer.h",
+        "cc/beamsearch_opennmt.h",
+        "cc/decoding_opennmt.h",
+        "cc/open_decoder.h",
+        "cc/ops/common_op.h",
+        "cc/ops/tf_traits.h",
+        "cc/kernels/opennmt_transformer_op.h",
+        "cc/kernels/decoder_op.h",
+    ],
+    deps = [
+        ":fastertransformer",
+        "@local_config_tf//:libtensorflow_framework",
+        "@local_config_tf//:tf_header_lib",
+    ] + if_cuda_is_configured([":cuda",  "@local_config_cuda//cuda:cuda_headers",  "@local_config_cuda//cuda:cublas_headers"]),
+    alwayslink = 1,
+    copts = select({
+        ":windows": ["/D__CLANG_SUPPORT_DYN_ANNOTATION__", "/DEIGEN_MPL2_ONLY", "/DEIGEN_MAX_ALIGN_BYTES=64", "/DEIGEN_HAS_TYPE_TRAITS=0", "/DTF_USE_SNAPPY", "/showIncludes", "/MD", "/O2", "/DNDEBUG", "/w", "-DWIN32_LEAN_AND_MEAN", "-DNOGDI", "/d2ReducedOptimizeHugeFunctions", "/arch:AVX", "/std:c++14", "-DTENSORFLOW_MONOLITHIC_BUILD", "/DPLATFORM_WINDOWS", "/DEIGEN_HAS_C99_MATH", "/DTENSORFLOW_USE_EIGEN_THREADPOOL", "/DEIGEN_AVOID_STL_ARRAY", "/Iexternal/gemmlowp", "/wd4018", "/wd4577", "/DNOGDI", "/UTF_COMPILE_LIBRARY"],
+        "//conditions:default": ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0"],
+    }) + if_cuda_is_configured(["-DTENSORFLOW_USE_NVCC=1", "-DGOOGLE_CUDA=1", "-x cuda", "-nvcc_options=relaxed-constexpr", "-nvcc_options=ftz=true"]),
+)
+
+cc_binary(
+    name = 'python/ops/_decoder_ops.so',
+    srcs = [
+        "cc/kernels/decoder_op.h",
+        "cc/ops/decoder_op.cc",
+    ],
+    linkshared = 1,
+    features = select({
+        ":windows": ["windows_export_all_symbols"],
+        "//conditions:default": [],
+    }),
+    deps = [
+        "@local_config_tf//:libtensorflow_framework",
+        "@local_config_tf//:tf_header_lib",
+    ] + if_cuda_is_configured([":decoder_ops_gpu"]),
+    copts = select({
+        ":windows": ["/D__CLANG_SUPPORT_DYN_ANNOTATION__", "/DEIGEN_MPL2_ONLY", "/DEIGEN_MAX_ALIGN_BYTES=64", "/DEIGEN_HAS_TYPE_TRAITS=0", "/DTF_USE_SNAPPY", "/showIncludes", "/MD", "/O2", "/DNDEBUG", "/w", "-DWIN32_LEAN_AND_MEAN", "-DNOGDI", "/d2ReducedOptimizeHugeFunctions", "/arch:AVX", "/std:c++14", "-DTENSORFLOW_MONOLITHIC_BUILD", "/DPLATFORM_WINDOWS", "/DEIGEN_HAS_C99_MATH", "/DTENSORFLOW_USE_EIGEN_THREADPOOL", "/DEIGEN_AVOID_STL_ARRAY", "/Iexternal/gemmlowp", "/wd4018", "/wd4577", "/DNOGDI", "/UTF_COMPILE_LIBRARY"],
+        "//conditions:default": ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0"],
+    }) + if_cuda_is_configured(["-DTENSORFLOW_USE_NVCC=1", "-DGOOGLE_CUDA=1", "-x cuda", "-nvcc_options=relaxed-constexpr", "-nvcc_options=ftz=true"]),
+)
+
+cc_library(
+    name = "decoding_ops_gpu",
+    srcs = [
+        "cc/kernels/decoding_op.cu.cc",
+    ],
+    hdrs = [
+        "cc/faster_transformer.h",
+        "cc/beamsearch_opennmt.h",
+        "cc/open_decoder.h",
+        "cc/ops/common_op.h",
+        "cc/ops/tf_traits.h",
+        "cc/kernels/opennmt_transformer_op.h",
+        "cc/kernels/decoding_op.h",
+    ],
+    deps = [
+        ":fastertransformer",
+        "@local_config_tf//:libtensorflow_framework",
+        "@local_config_tf//:tf_header_lib",
+    ] + if_cuda_is_configured([":cuda",  "@local_config_cuda//cuda:cuda_headers",  "@local_config_cuda//cuda:cublas_headers"]),
+    alwayslink = 1,
+    copts = select({
+        ":windows": ["/D__CLANG_SUPPORT_DYN_ANNOTATION__", "/DEIGEN_MPL2_ONLY", "/DEIGEN_MAX_ALIGN_BYTES=64", "/DEIGEN_HAS_TYPE_TRAITS=0", "/DTF_USE_SNAPPY", "/showIncludes", "/MD", "/O2", "/DNDEBUG", "/w", "-DWIN32_LEAN_AND_MEAN", "-DNOGDI", "/d2ReducedOptimizeHugeFunctions", "/arch:AVX", "/std:c++14", "-DTENSORFLOW_MONOLITHIC_BUILD", "/DPLATFORM_WINDOWS", "/DEIGEN_HAS_C99_MATH", "/DTENSORFLOW_USE_EIGEN_THREADPOOL", "/DEIGEN_AVOID_STL_ARRAY", "/Iexternal/gemmlowp", "/wd4018", "/wd4577", "/DNOGDI", "/UTF_COMPILE_LIBRARY"],
+        "//conditions:default": ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0"],
+    }) + if_cuda_is_configured(["-DTENSORFLOW_USE_NVCC=1", "-DGOOGLE_CUDA=1", "-x cuda", "-nvcc_options=relaxed-constexpr", "-nvcc_options=ftz=true"]),
+)
+
