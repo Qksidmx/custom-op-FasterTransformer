@@ -34,7 +34,6 @@ cc_library(
     name = "fastertransformer",
     srcs = [
         "cc/cuda/cuda_kernels.cu.cc", "cc/cuda/open_attention.cu.cc",
-        #"cc/kernels/opennmt_transformer_op.h", "cc/kernels/opennmt_transformer_op.cu.cc",
     ],
     hdrs = [
         "cc/common.h",
@@ -48,7 +47,7 @@ cc_library(
     deps = [
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
-    ] + if_cuda_is_configured([":cuda",  "@local_config_cuda//cuda:cuda_headers",  "@local_config_cuda//cuda:cublas_headers"]),
+    ] + if_cuda_is_configured([":cuda", "@local_config_cuda//cuda:cuda_headers", "@local_config_cuda//cuda:cublas_headers"]),
     alwayslink = 1,
     linkopts = [],
     copts = select({
@@ -66,10 +65,13 @@ cc_library(
         "cc/tf_traits.h",
         "cc/faster_transformer.h",
         "cc/bert_encoder_transformer.h",
-	"cc/kernels/bert_transformer_op.h",
+        "cc/open_decoder.h",
+        "cc/ops/common_op.h",
+        "cc/kernels/bert_transformer_op.h",
+        "cc/kernels/decoder_op.h",
     ],
     deps = [
-	":fastertransformer",
+        ":fastertransformer",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
     ] + if_cuda_is_configured([":cuda",  "@local_config_cuda//cuda:cuda_headers",  "@local_config_cuda//cuda:cublas_headers" ]),
@@ -89,13 +91,16 @@ cc_library(
     hdrs = [
         "cc/tf_traits.h",
         "cc/faster_transformer.h",
-        "cc/opennmt_encoder_transformer.h",
-	"cc/kernels/opennmt_transformer_op.h", 
-	#Included for `EncoderInitParam`r
+        #Included for `EncoderInitParam`
         "cc/bert_encoder_transformer.h",
+        "cc/opennmt_encoder_transformer.h",
+        "cc/open_decoder.h",
+        "cc/ops/common_op.h",
+        "cc/kernels/opennmt_transformer_op.h",
+        "cc/kernels/decoder_op.h",
     ],
     deps = [
-	":fastertransformer",
+        ":fastertransformer",
         "@local_config_tf//:libtensorflow_framework",
         "@local_config_tf//:tf_header_lib",
     ] + if_cuda_is_configured([":cuda",  "@local_config_cuda//cuda:cuda_headers",  "@local_config_cuda//cuda:cublas_headers"]),
@@ -109,16 +114,11 @@ cc_library(
 
 cc_library(
     name = "faster_transformer_ops_gpu",
-    srcs = [
-    ],
-    hdrs = [
-    ],
     deps = [
-	":opennmt_transformer_ops_gpu",
-	":bert_transformer_ops_gpu",
+        ":opennmt_transformer_ops_gpu",
+        ":bert_transformer_ops_gpu",
     ] + if_cuda_is_configured([":cuda",  "@local_config_cuda//cuda:cuda_headers",  "@local_config_cuda//cuda:cublas_headers" ]),
     alwayslink = 1,
-    linkopts = [],
     copts = select({
         ":windows": ["/D__CLANG_SUPPORT_DYN_ANNOTATION__", "/DEIGEN_MPL2_ONLY", "/DEIGEN_MAX_ALIGN_BYTES=64", "/DEIGEN_HAS_TYPE_TRAITS=0", "/DTF_USE_SNAPPY", "/showIncludes", "/MD", "/O2", "/DNDEBUG", "/w", "-DWIN32_LEAN_AND_MEAN", "-DNOGDI", "/d2ReducedOptimizeHugeFunctions", "/arch:AVX", "/std:c++14", "-DTENSORFLOW_MONOLITHIC_BUILD", "/DPLATFORM_WINDOWS", "/DEIGEN_HAS_C99_MATH", "/DTENSORFLOW_USE_EIGEN_THREADPOOL", "/DEIGEN_AVOID_STL_ARRAY", "/Iexternal/gemmlowp", "/wd4018", "/wd4577", "/DNOGDI", "/UTF_COMPILE_LIBRARY"],
         "//conditions:default": ["-pthread", "-std=c++11", "-D_GLIBCXX_USE_CXX11_ABI=0"],
@@ -128,6 +128,10 @@ cc_library(
 cc_binary(
     name = 'python/ops/_faster_transformer_ops.so',
     srcs = [
+        "cc/kernels/bert_transformer_op.h",
+        "cc/kernels/opennmt_transformer_op.h",
+        "cc/ops/bert_transformer_op.cc",
+        "cc/ops/opennmt_transformer_op.cc",
     ],
     linkshared = 1,
     features = select({
