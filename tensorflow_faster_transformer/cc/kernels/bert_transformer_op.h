@@ -20,7 +20,7 @@
 
 #include "../common.h"
 #include "../faster_transformer.h"
-#include "../tf_traits.h"
+#include "../ops/tf_traits.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/types.h"
 #include "tensorflow/core/framework/tensor_types.h"

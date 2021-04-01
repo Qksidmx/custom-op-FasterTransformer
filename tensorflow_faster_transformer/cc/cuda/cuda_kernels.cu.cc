@@ -214,6 +214,47 @@ void input_layernorm(T* out, const T* gamma, const T* beta, int m, int n)
                 (T)(((local_out - s_mean) * rsqrtf(s_variance)) * (float)(__ldg(&gamma[i])) + (float)(__ldg(&beta[i])));
 }
 
+template <>
+__global__
+void input_layernorm(half* out, const half* gamma, const half* beta, int m, int n)
+{
+  int tid = threadIdx.x;
+  __shared__ float s_mean;
+  __shared__ float s_variance;
+  float mean =  0.0f;
+  float variance = 0.0f;
+  float2 local_out_fp2;
+
+  half2* out_ptr = (half2*)out;
+  const half2* gamma_ptr = (const half2*)gamma;
+  const half2* beta_ptr = (const half2*)beta;
+
+  float local_out = 0.0f;
+  int id = blockIdx.x * n / 2 + tid;
+  //local_out_fp2 = __half22float2(__hadd2(__hadd2(out_ptr[id], input_ptr[id]), __ldg(&bias_ptr[tid])));
+  local_out_fp2 = __half22float2(out_ptr[id]);
+  local_out += local_out_fp2.x;
+  local_out += local_out_fp2.y;
+
+  mean = blockReduceSum<float>(local_out);
+  if(threadIdx.x == 0)
+    s_mean = mean / n;
+  __syncthreads();
+
+  variance = (local_out_fp2.x - s_mean) * (local_out_fp2.x - s_mean);
+  variance += (local_out_fp2.y - s_mean) * (local_out_fp2.y - s_mean);
+  variance = blockReduceSum<float>(variance);
+  if(threadIdx.x == 0)
+    s_variance = rsqrtf(variance / n + 1e-6f);
+  __syncthreads();
+
+  float2 gamma_val = __half22float2(__ldg(&gamma_ptr[tid]));
+  float2 beta_val = __half22float2(__ldg(&beta_ptr[tid]));
+  local_out_fp2.x = (local_out_fp2.x - s_mean) * s_variance * gamma_val.x + beta_val.x;
+  local_out_fp2.y = (local_out_fp2.y - s_mean) * s_variance * gamma_val.y + beta_val.y;
+  out_ptr[id] = __float22half2_rn(local_out_fp2);
+}
+
 template <typename T>
 __global__
 void add_bias(T* out, const T* input, const T* bias, int m, int n)
@@ -321,6 +362,18 @@ void add_bias_relu_act_kernelLauncher(T* out, const T* bias, int m, int n, cudaS
 }
 
 
+//template <>
+//void add_bias_relu_act_kernelLauncher(half* out, const half* bias, int m, int n, cudaStream_t stream)
+//{
+//  dim3 grid(m / 64);
+//    dim3 grid(m / 4);
+//    dim3 block(n / 8);
+//   assert(block.x <= 1024);
+//  dim3 block(n);
+//    add_bias_relu_act<half><<<grid, block, 0, stream>>>(out, bias, m, n);
+//}
+
+
 template <typename T>
 void add_bias_act_kernelLauncher(T* out, const T* bias, int m, int n, cudaStream_t stream)
 {
@@ -339,6 +392,15 @@ void input_layernorm_kernelLauncher(T* out, const T* gamma, const T* beta, int m
     dim3 block(n);
     assert(n <= 1024);
     input_layernorm<T><<<grid, block, 0, stream>>>(out, gamma, beta, m, n);
+}
+
+template<>
+void input_layernorm_kernelLauncher(half* out, const half* gamma, const half* beta, int m, int n, cudaStream_t stream)
+{
+  dim3 grid(m);
+  dim3 block(n / 2);
+  assert(n / 2 <= 1024);
+  input_layernorm<half><<<grid, block, 0, stream>>>(out, gamma, beta, m, n);
 }
 
 template<typename T>
@@ -704,11 +766,18 @@ void sine_position_encoder(
 template void add_bias_relu_act_kernelLauncher<float>(
         float* out, const float* bias, int m, int n, cudaStream_t stream);
 
+template void add_bias_relu_act_kernelLauncher<half>(
+  half* out, const half* bias, int m, int n, cudaStream_t stream);
+
 template void add_bias_act_kernelLauncher<float>(
   float* out, const float* bias, int m, int n, cudaStream_t stream);
 
 template void input_layernorm_kernelLauncher<float>(
         float* out, const float* gamma, const float* beta,
+        int m, int n, cudaStream_t stream);
+
+template void input_layernorm_kernelLauncher<half>(
+        half* out, const half* gamma, const half* beta,
         int m, int n, cudaStream_t stream);
 
 template void add_bias_kernelLauncher<float>(
