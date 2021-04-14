@@ -77,7 +77,7 @@ while [[ "$TF_CUDA_VERSION" == "" ]]; do
   read -p "Are you building against TensorFlow 2.1(including RCs) or newer?[Y/n] " INPUT
   case $INPUT in
     [Yy]* ) echo "Build against TensorFlow 2.1 or newer."; TF_CUDA_VERSION=10.1;;
-    [Nn]* ) echo "Build against TensorFlow <2.1."; TF_CUDA_VERSION=10.0;;
+    [Nn]* ) echo "Build against TensorFlow <2.1."; TF_CUDA_VERSION=10.1;;
     "" ) echo "Build against TensorFlow 2.1 or newer."; TF_CUDA_VERSION=10.1;;
     * ) echo "Invalid selection: " $INPUT;;
   esac
