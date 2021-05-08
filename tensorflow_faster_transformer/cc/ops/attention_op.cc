@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "fastertransformer/faster_transformer.h"
-#include "fastertransformer/tf_op/attention_op.h"
-#include "fastertransformer/tf_op/common_op.h"
+#include "../faster_transformer.h"
+#include "../kernels/attention_op.h"
+#include "common_op.h"
 #include "tensorflow/core/framework/op.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"

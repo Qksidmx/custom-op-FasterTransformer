@@ -21,9 +21,9 @@
 #pragma once
 
 #include <cuda_runtime.h>
-#include "fastertransformer/allocator.h"
-#include "fastertransformer/cuda/cuda_kernels.h"
-#include "fastertransformer/common_structure.h"
+#include "allocator.h"
+#include "cuda/cuda_kernels.h"
+#include "common_structure.h"
 
 namespace fastertransformer
 {

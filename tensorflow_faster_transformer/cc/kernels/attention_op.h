@@ -18,9 +18,9 @@
 #ifndef TENSORFLOW_CORE_KERNELS_MULTIHEADATTR_OP_H_
 #define TENSORFLOW_CORE_KERNELS_MULTIHEADATTR_OP_H_
 
-#include "fastertransformer/common.h"
-#include "fastertransformer/faster_transformer.h"
-#include "fastertransformer/tf_op/tf_traits.h"
+#include "../common.h"
+#include "../faster_transformer.h"
+#include "../ops/tf_traits.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/types.h"
 #include "tensorflow/core/framework/tensor_types.h"

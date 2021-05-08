@@ -15,9 +15,9 @@
  */
 #ifdef GOOGLE_CUDA
 #define EIGEN_USE_GPU
-#include "fastertransformer/tf_op/attention_op.h"
-#include "fastertransformer/common.h"
-#include "fastertransformer/faster_transformer.h"
+#include "attention_op.h"
+#include "../common.h"
+#include "../faster_transformer.h"
 #include "tensorflow/core/framework/op.h"
 #include <cuda_runtime.h>
 #include <string>
