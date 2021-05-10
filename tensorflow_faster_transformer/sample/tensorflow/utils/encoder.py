@@ -19,7 +19,7 @@ import math
 import six
 import os
 from common import create_initializer
-
+import tensorflow_faster_transformer as ft
 
 def gelu(x):
     cdf = 0.5 * (1.0 + tf.tanh(
@@ -316,11 +316,11 @@ def op_encoder(inputs,
                encoder_args,
                encoder_vars,
                attention_mask):
-    transformer_op_module = tf.load_op_library(
-        os.path.join('./lib/libtf_fastertransformer.so'))
+    #transformer_op_module = tf.load_op_library(
+    #    os.path.join('./lib/libtf_fastertransformer.so'))
     for layer_idx in range(encoder_args.num_layer):
         val_off = layer_idx * 16
-        outputs = transformer_op_module.bert_transformer(
+        outputs = ft.bert_transformer(
             inputs,
             inputs,
             encoder_vars[val_off + 0], encoder_vars[val_off +
@@ -345,11 +345,11 @@ def op_opennmt_encoder(inputs,
                 encoder_args,
                 encoder_vars,
                 attention_mask):
-    transformer_op_module = tf.load_op_library(
-        os.path.join('./lib/libtf_fastertransformer.so'))
+    #transformer_op_module = tf.load_op_library(
+    #    os.path.join('./lib/libtf_fastertransformer.so'))
     for layer_idx in range(encoder_args.num_layer):
         val_off = layer_idx * 16
-        outputs = transformer_op_module.open_nmt_transformer(
+        outputs = ft.open_nmt_transformer(
             inputs,
             inputs,
             encoder_vars[val_off + 0], # layernorm_beta
