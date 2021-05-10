@@ -15,9 +15,18 @@
 # ==============================================================================
 PLATFORM="$(uname -s | tr 'A-Z' 'a-z')"
 
-TENSORFLOW_CPU="tensorflow"
-TENSORFLOW_GPU="tensorflow-gpu"
-TF_CUDA_VERSION=10.1
+
+if [[ $(python --version) == Python\ 2.* ]]; then
+  echo "Python version: 2.x"
+  TENSORFLOW_CPU="tensorflow"
+  TENSORFLOW_GPU="tensorflow-gpu"
+fi
+
+if [[ $(python --version) == Python\ 3.* ]]; then
+  echo "Python version: 3.x"
+  TENSORFLOW_CPU="tensorflow-cpu"
+  TENSORFLOW_GPU="tensorflow"
+fi
 
 function write_to_bazelrc() {
   echo "$1" >> .bazelrc
@@ -77,15 +86,15 @@ else
   done
 fi
 
-#while [[ "$TF_CUDA_VERSION" == "" ]]; do
-#  read -p "Are you building against TensorFlow 2.1(including RCs) or newer?[Y/n] " INPUT
-#  case $INPUT in
-#    [Yy]* ) echo "Build against TensorFlow 2.1 or newer."; TF_CUDA_VERSION=10.1;;
-#    [Nn]* ) echo "Build against TensorFlow <2.1."; TF_CUDA_VERSION=10.0;;
-#    "" ) echo "Build against TensorFlow 2.1 or newer."; TF_CUDA_VERSION=10.1;;
-#    * ) echo "Invalid selection: " $INPUT;;
-#  esac
-#done
+while [[ "$TF_CUDA_VERSION" == "" ]]; do
+  read -p "Are you building against TensorFlow 2.1(including RCs) or newer?[Y/n] " INPUT
+  case $INPUT in
+    [Yy]* ) echo "Build against TensorFlow 2.1 or newer."; TF_CUDA_VERSION=10.1;;
+    [Nn]* ) echo "Build against TensorFlow <2.1."; TF_CUDA_VERSION=10.0;;
+    "" ) echo "Build against TensorFlow 2.1 or newer."; TF_CUDA_VERSION=10.1;;
+    * ) echo "Invalid selection: " $INPUT;;
+  esac
+done
 
 
 # CPU
