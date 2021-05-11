@@ -17,6 +17,7 @@ import tensorflow as tf
 import numpy as np
 import argparse
 import sys
+sys.path.append('..')
 from utils.common import TransformerArgument, cross_check, time_test
 from utils.common import DecodingArgument
 import utils.encoder
