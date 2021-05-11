@@ -46,7 +46,7 @@ with tf.Session() as sess:
                     # transformer/encoder/layer_x/multi_head/conv1d_1/kernel:0 -> transformer/encoder/layer_x/attention/output/kernel:0
                     # transformer/encoder/layer_x/multi_head/LayerNorm/gamma:0 -> transformer/encoder/layer_x/attention/output/LayerNorm/gamma:0
                     if var.name.find("multi_head/conv1d/") != -1:
-                        dim = val.shape[-1] / 3
+                        dim = int(val.shape[-1] / 3)
                         Q, K, V = np.split(val, [dim, dim * 2], axis=-1)
                         ckpt[var.name.replace("multi_head/conv1d/", "multi_head/query/")] = Q
                         ckpt[var.name.replace("multi_head/conv1d/", "multi_head/key/")] = K
@@ -98,7 +98,7 @@ with tf.Session() as sess:
                     # transformer/decoder/layer_x/masked_multi_head/conv1d_1/kernel:0 -> transformer/decoder/layer_x/masked_multi_head/conv1d/kernel:0
                     # transformer/decoder/layer_x/masked_multi_head/LayerNorm/gamma:0 -> transformer/decoder/layer_x/masked_multi_head/LayerNorm/gamma:0
                     if var.name.find("masked_multi_head/conv1d/") != -1:
-                        dim = val.shape[-1] / 3
+                        dim = int(val.shape[-1] / 3)
                         Q, K, V = np.split(val, [dim, dim * 2], axis=-1)
                         ckpt[pre_name.replace("masked_multi_head/conv1d/", "masked_multi_head/query/")] = Q
                         ckpt[pre_name.replace("masked_multi_head/conv1d/", "masked_multi_head/key/")] = K
@@ -118,7 +118,7 @@ with tf.Session() as sess:
                         name = pre_name.replace("multi_head/conv1d/", "multi_head/query/")
                         ckpt[name] = val
                     elif var.name.find("multi_head/conv1d_1/") != -1:
-                        dim = val.shape[-1] / 2
+                        dim = int(val.shape[-1] / 2)
                         K, V = np.split(val, [dim], axis=-1)
                         ckpt[pre_name.replace("multi_head/conv1d_1/", "multi_head/key/")] = K
                         ckpt[pre_name.replace("multi_head/conv1d_1/", "multi_head/value/")] = V
@@ -167,6 +167,7 @@ with tf.Session() as sess:
             print(key)
         with open('model_opennmt.pkl', 'wb') as f:
             pickle.dump(ckpt, f, 0)
+            print('Done')
 
 
     dumpModel_new()
