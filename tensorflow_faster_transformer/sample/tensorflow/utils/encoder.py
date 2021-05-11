@@ -18,7 +18,7 @@ import numpy as np
 import math
 import six
 import os
-from common import create_initializer
+from .common import create_initializer
 import tensorflow_faster_transformer as ft
 
 def gelu(x):
@@ -889,3 +889,4 @@ def dot_product_attention(queries,
     context = tf.matmul(drop_attn, values)
 
     return context, attn
+

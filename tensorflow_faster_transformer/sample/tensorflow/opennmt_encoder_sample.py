@@ -19,7 +19,6 @@ import argparse
 import sys
 from utils.common import TransformerArgument, cross_check, time_test
 from utils.common import DecodingArgument
-from utils.decoding import tf_decoding, op_decoding
 import utils.encoder
 from opennmt.utils import misc
 from opennmt.encoders.self_attention_encoder import SelfAttentionEncoder
@@ -118,6 +117,7 @@ if __name__ == "__main__":
     source_embedding = np.random.randn(batch_size, memory_sequence_length, encoder_hidden_dim)
     source_embedding = tf.convert_to_tensor(source_embedding, dtype=tf_datatype)
 
+    '''
     source_inputter = WordEmbedder("source_vocabulary", embedding_size=encoder_hidden_dim)
     target_inputter = WordEmbedder("target_vocabulary", embedding_size=encoder_hidden_dim)
     inputter = ExampleInputter(source_inputter, target_inputter)
@@ -139,14 +139,17 @@ if __name__ == "__main__":
                                      end_id=end_of_sentence_id,
                                      encoder_hidden_dim=encoder_head_num * encoder_size_per_head,
                                      dtype=tf_datatype)
+    '''
 
     mode = tf.estimator.ModeKeys.PREDICT
     with tf.variable_scope("transformer/encoder"):
-        # dataset = inputter.make_inference_dataset(source_file, batch_size)
-        # iterator = dataset.make_initializable_iterator()
-        # source = iterator.get_next()
-        # source_embedding = source_inputter.make_inputs(source)
-        # memory_sequence_length = source["length"]
+        '''
+        dataset = inputter.make_inference_dataset(source_file, batch_size)
+        iterator = dataset.make_initializable_iterator()
+        source = iterator.get_next()
+        source_embedding = source_inputter.make_inputs(source)
+        memory_sequence_length = source["length"]
+        '''
 
         encoder_args = TransformerArgument(batch_size=batch_size, beam_width=beam_width,
                                            head_num=encoder_head_num,
@@ -222,9 +225,10 @@ if __name__ == "__main__":
             except tf.errors.OutOfRangeError:
                 break
         if args.test_time:
-            prtint("RUN TIME TEST ...")
+            print("RUN TIME TEST ...")
             tf_time = time_test(sess, tf_encoder_result, 100)
             op_time = time_test(sess, op_encoder_result, 100)
 
             print("tf_opennmt time cost: ", tf_time)
             print("op_opennmt time cost: ", op_time)
+
