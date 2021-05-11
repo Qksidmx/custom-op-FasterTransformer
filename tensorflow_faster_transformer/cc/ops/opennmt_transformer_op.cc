@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "../faster_transformer.h"
 #include "../kernels/opennmt_transformer_op.h"
 #include "common_op.h"
 #include "tensorflow/core/framework/op.h"

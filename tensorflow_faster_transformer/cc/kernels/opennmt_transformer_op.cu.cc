@@ -17,7 +17,6 @@
 #define EIGEN_USE_GPU
 #include "opennmt_transformer_op.h"
 #include "../common.h"
-#include "../faster_transformer.h"
 #include "tensorflow/core/framework/op.h"
 #include <cuda_runtime.h>
 #include <string>

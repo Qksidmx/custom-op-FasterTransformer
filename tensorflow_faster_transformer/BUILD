@@ -64,10 +64,7 @@ cc_library(
         "cc/kernels/bert_transformer_op.cu.cc",
     ],
     hdrs = [
-        "cc/faster_transformer.h",
         "cc/bert_encoder_transformer.h",
-        "cc/opennmt_encoder_transformer.h",
-        "cc/attention.h",
         "cc/open_decoder.h",
         "cc/ops/common_op.h",
         "cc/ops/tf_traits.h",
@@ -93,11 +90,8 @@ cc_library(
         "cc/kernels/opennmt_transformer_op.cu.cc",
     ],
     hdrs = [
-        "cc/faster_transformer.h",
-        #Included for `EncoderInitParam`
         "cc/bert_encoder_transformer.h",
         "cc/opennmt_encoder_transformer.h",
-        "cc/attention.h",
         "cc/open_decoder.h",
         "cc/ops/common_op.h",
         "cc/ops/tf_traits.h",
@@ -122,10 +116,7 @@ cc_library(
         "cc/kernels/attention_op.cu.cc",
     ],
     hdrs = [
-        "cc/faster_transformer.h",
         "cc/attention.h",
-        "cc/bert_encoder_transformer.h",
-        "cc/opennmt_encoder_transformer.h",
         "cc/open_decoder.h",
         "cc/ops/common_op.h",
         "cc/ops/tf_traits.h",

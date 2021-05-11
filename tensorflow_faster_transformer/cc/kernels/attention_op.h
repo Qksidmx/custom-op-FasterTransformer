@@ -19,7 +19,7 @@
 #define TENSORFLOW_CORE_KERNELS_MULTIHEADATTR_OP_H_
 
 #include "../common.h"
-#include "../faster_transformer.h"
+#include "../attention.h"
 #include "../ops/tf_traits.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/types.h"

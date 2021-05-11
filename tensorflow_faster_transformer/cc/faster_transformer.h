@@ -20,8 +20,6 @@
 #pragma once
 
 #include "bert_encoder_transformer.h"
-#include "opennmt_encoder_transformer.h"
-#include "attention.h"
 #include <cuda_fp16.h>
 namespace fastertransformer{
 
