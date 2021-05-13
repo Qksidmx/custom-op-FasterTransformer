@@ -158,6 +158,12 @@ def attention_layer(from_tensor,
 
     return context_layer
 
+def tf_sbert_encoder(input_tensor_query,
+               input_tensor_question,
+               encoder_args,
+               attention_mask=None):
+    return tf_encoder(input_tensor=input_tensor_query,encoder_args=encoder_args,attention_mask=attention_mask),\
+           tf_encoder(input_tensor=input_tensor_question,encoder_args=encoder_args,attention_mask=attention_mask)
 
 def tf_encoder(input_tensor,
                encoder_args,
@@ -311,6 +317,31 @@ def assert_rank(tensor, expected_rank, name=None):
             "`%d` (shape = %s) is not equal to the expected rank `%s`" %
             (name, scope_name, actual_rank, str(tensor.shape), str(expected_rank)))
 
+def op_sbert_encoder(inputs_query,
+               inputs_question,
+               encoder_args,
+               encoder_vars,
+               attention_mask):
+    for layer_idx in range(encoder_args.num_layer):
+        val_off = layer_idx * 16
+        outputs_query, outputs_question = ft.sentence_bert_transformer(
+            inputs_query,
+            inputs_query,
+            encoder_vars[val_off + 0], encoder_vars[val_off + 2], encoder_vars[val_off + 4], 
+            encoder_vars[val_off + 1], encoder_vars[val_off + 3], encoder_vars[val_off + 5],
+            attention_mask,
+            encoder_vars[val_off + 6 ], encoder_vars[val_off + 7 ], encoder_vars[val_off + 8 ], encoder_vars[val_off + 9 ], encoder_vars[val_off + 10], 
+            encoder_vars[val_off + 11], encoder_vars[val_off + 12], encoder_vars[val_off + 13], encoder_vars[val_off + 14], encoder_vars[val_off + 15],
+            inputs_question,
+            inputs_question,
+            from_seq_len=encoder_args.max_seq_len, 
+            to_seq_len=encoder_args.max_seq_len,
+            head_num=encoder_args.head_num, 
+            size_per_head=encoder_args.size_per_head)
+        inputs_query = outputs_query
+        inputs_question = outputs_question
+
+    return outputs_query, outputs_question
 
 def op_encoder(inputs,
                encoder_args,
@@ -323,20 +354,15 @@ def op_encoder(inputs,
         outputs = ft.bert_transformer(
             inputs,
             inputs,
-            encoder_vars[val_off + 0], encoder_vars[val_off +
-                                                    2], encoder_vars[val_off + 4],
-            encoder_vars[val_off + 1], encoder_vars[val_off +
-                                                    3], encoder_vars[val_off + 5],
+            encoder_vars[val_off + 0], encoder_vars[val_off + 2], encoder_vars[val_off + 4], 
+            encoder_vars[val_off + 1], encoder_vars[val_off + 3], encoder_vars[val_off + 5],
             attention_mask,
-            encoder_vars[val_off + 6], encoder_vars[val_off +
-                                                    7], encoder_vars[val_off + 8],
-            encoder_vars[val_off + 9], encoder_vars[val_off +
-                                                    10], encoder_vars[val_off + 11],
-            encoder_vars[val_off + 12], encoder_vars[val_off +
-                                                     13], encoder_vars[val_off + 14],
-            encoder_vars[val_off + 15],
-            from_seq_len=encoder_args.max_seq_len, to_seq_len=encoder_args.max_seq_len,
-            head_num=encoder_args.head_num, size_per_head=encoder_args.size_per_head)
+            encoder_vars[val_off + 6 ], encoder_vars[val_off + 7 ], encoder_vars[val_off + 8 ], encoder_vars[val_off + 9 ], encoder_vars[val_off + 10], 
+            encoder_vars[val_off + 11], encoder_vars[val_off + 12], encoder_vars[val_off + 13], encoder_vars[val_off + 14], encoder_vars[val_off + 15],
+            from_seq_len=encoder_args.max_seq_len, 
+            to_seq_len=encoder_args.max_seq_len,
+            head_num=encoder_args.head_num, 
+            size_per_head=encoder_args.size_per_head)
         inputs = outputs
     return outputs
 
