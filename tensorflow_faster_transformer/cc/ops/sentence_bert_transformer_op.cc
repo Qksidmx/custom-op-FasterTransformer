@@ -48,10 +48,10 @@ REGISTER_OP("SentenceBertTransformer")
     .Input("output_bias: T")
     .Input("output_layernorm_beta: T")
     .Input("output_layernorm_gamma: T")
-    .Input("b_from_tensor: T")
-    .Input("b_to_tensor: T")
-    .Output("output: T")
-    .Output("b_output: T")
+    .Input("from_tensor_question: T")
+    .Input("to_tensor_question: T")
+    .Output("output_query: T")
+    .Output("output_question: T")
     .Attr("T: {float, half}")
     .Attr("from_seq_len: int >= 1")
     .Attr("to_seq_len: int >= 1")
@@ -63,22 +63,36 @@ REGISTER_OP("SentenceBertTransformer")
       c->GetAttr("to_seq_len", &to_seq_len);
       c->GetAttr("head_num", &head_num);
       c->GetAttr("size_per_head", &size_per_head);
-      int rank = c->Rank(c->input(0));
-      if (rank != 2 && rank != 3)
+
+      int rank_query = c->Rank(c->input(0));
+      int rank_question = c->Rank(c->input(19));
+
+      if (rank_query != 2 && rank_query != 3)
       {
         return errors::InvalidArgument("[@SentenceBertTransformer::ShapeInference] "
                                        "invalid rank (from_tensor@input[0]): ",
-                                       rank,
+                                       rank_query,
                                        ", should be 2 or 3");
       }
+
+      if (rank_query != rank_question)
+      {
+        return errors::InvalidArgument("[@SentenceBertTransformer::ShapeInference] "
+                                       "[dimension doesn't match]: query tensor's dim: ",
+                                       rank_query,
+                                       ", question tensor's dim: ",
+                                       rank_question,
+                                       ", the dims of query and question tensor should be equal !");
+      }
+
       // calculate batch size
       shape_inference::DimensionOrConstant from_len_dim((int64)from_seq_len);
       shape_inference::DimensionHandle output_dim1;
       shape_inference::DimensionHandle batch_dim;
       shape_inference::ShapeHandle input0;
 
-      TF_RETURN_IF_ERROR(c->WithRank(c->input(0), rank, &input0));
-      if (rank == 3)
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(0), rank_query, &input0));
+      if (rank_query == 3)
       { // embedding_output, [batch_size, seq_len, hidden_size]
         batch_dim = c->Dim(c->input(0), 0);
       }
@@ -118,16 +132,29 @@ public:
 
   void Compute(OpKernelContext *context) override
   {
-    int rank = (int)context->input(0).dims();
-    if (rank != 2 && rank != 3)
+    int rank_query = (int)context->input(0).dims();
+    int rank_question = (int)context->input(19).dims();
+
+    if (rank_query != 2 && rank_query != 3)
     {
       OP_REQUIRES(context, false,
                   errors::InvalidArgument("[@SentenceBertTransformer::Compute] "
                                           "invalid rank (from_tensor@input[0]): ",
-                                          rank,
+                                          rank_query,
                                           ", should be 2 or 3"));
     }
-    else if (rank == 3)
+    if (rank_query != rank_question)
+    {
+      OP_REQUIRES(context, false,
+                  errors::InvalidArgument("[@SentenceBertTransformer::ShapeInference] "
+                                       "[dimension doesn't match]: query tensor's dim: ",
+                                       rank_query,
+                                       ", question tensor's dim: ",
+                                       rank_question,
+                                       ", the dims of query and question tensor should be equal !"));
+    }
+
+    else if (rank_query == 3)
     { // [batch_size, from_seq_len, hidden_size]
       batch_size_ = (int)context->input(0).dim_size(0);
     }
@@ -180,12 +207,12 @@ public:
     this->get_tensor(context, 17, &param.ffn_layernorm.beta);
     this->get_tensor(context, 18, &param.ffn_layernorm.gamma);
 
-    Tensor *output = nullptr;
+    Tensor *output_query = nullptr;
     OP_REQUIRES_OK(
         context,
-        context->allocate_output(0, {batch_size_ * from_seq_len_, head_num_ * size_per_head_}, &output));
+        context->allocate_output(0, {batch_size_ * from_seq_len_, head_num_ * size_per_head_}, &output_query));
 
-    param.transformer_out = reinterpret_cast<DataType_ *>(output->flat<T>().data());
+    param.transformer_out = reinterpret_cast<DataType_ *>(output_query->flat<T>().data());
 
     OP_REQUIRES_OK(
         context,
@@ -195,17 +222,18 @@ public:
             encoder_transformer_));
 
     
-    //calculate b_from_tensor
+
+    //calculate from_tensor_question
 
     this->get_tensor(context, 19, &param.from_tensor);
     this->get_tensor(context, 20, &param.to_tensor);
 
-    Tensor *b_output = nullptr;
+    Tensor *output_question = nullptr;
     OP_REQUIRES_OK(
         context,
-        context->allocate_output(1, {batch_size_ * from_seq_len_, head_num_ * size_per_head_}, &b_output));
+        context->allocate_output(1, {batch_size_ * from_seq_len_, head_num_ * size_per_head_}, &output_question));
 
-    param.transformer_out = reinterpret_cast<DataType_ *>(b_output->flat<T>().data());
+    param.transformer_out = reinterpret_cast<DataType_ *>(output_question->flat<T>().data());
 
     OP_REQUIRES_OK(
         context,
