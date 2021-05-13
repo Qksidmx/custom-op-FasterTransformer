@@ -1,3 +1,5 @@
 bazel-bin
 bazel-out
 __pycache__
+artifacts
+.bazelrc

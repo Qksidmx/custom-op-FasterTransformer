@@ -23,6 +23,8 @@ from tensorflow.python.platform import resource_loader
 
 faster_transformer_ops = load_library.load_op_library(
     resource_loader.get_path_to_datafile('_faster_transformer_ops.so'))
+print(dir(faster_transformer_ops))
 bert_transformer = faster_transformer_ops.bert_transformer
+sentence_bert_transformer = faster_transformer_ops.sentence_bert_transformer
 open_nmt_transformer = faster_transformer_ops.open_nmt_transformer
 attention = faster_transformer_ops.attention

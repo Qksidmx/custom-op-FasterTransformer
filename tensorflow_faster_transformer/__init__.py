@@ -17,5 +17,6 @@
 from __future__ import absolute_import
 
 from tensorflow_faster_transformer.python.ops.faster_transformer_ops import bert_transformer
+from tensorflow_faster_transformer.python.ops.faster_transformer_ops import sentence_bert_transformer
 from tensorflow_faster_transformer.python.ops.faster_transformer_ops import open_nmt_transformer
 from tensorflow_faster_transformer.python.ops.faster_transformer_ops import attention
