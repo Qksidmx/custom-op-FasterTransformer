@@ -15,8 +15,8 @@
 import tensorflow as tf
 import numpy as np
 import argparse
-from utils.common import TransformerArgument, time_test, cross_check
-from utils.encoder import tf_sbert_encoder, op_sbert_encoder
+from ..utils.common import TransformerArgument, time_test, cross_check
+from ..utils.encoder import tf_encoder, op_encoder
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -59,14 +59,8 @@ if __name__ == "__main__":
 
     hidden_dim = head_num * size_per_head
     initializer_range = 0.02
-
-    # query tensor
-    from_data_query = np.random.randn(batch_size, seq_len, hidden_dim)
-    from_tensor_query = tf.convert_to_tensor(from_data_query, dtype=tf_datatype)
-    
-    # question tensor 
-    from_data_question = np.random.randn(batch_size, seq_len, hidden_dim)
-    from_tensor_question = tf.convert_to_tensor(from_data_question, dtype=tf_datatype)
+    from_data = np.random.randn(batch_size, seq_len, hidden_dim)
+    from_tensor = tf.convert_to_tensor(from_data, dtype=tf_datatype)
 
     mask = np.random.randint(2, size=(batch_size, seq_len, seq_len))
     attention_mask = tf.convert_to_tensor(mask, dtype=tf_datatype)
@@ -79,14 +73,12 @@ if __name__ == "__main__":
                                        max_seq_len=seq_len,
                                        dtype=tf_datatype)
 
-    tf_encoder_result = tf_sbert_encoder(input_tensor_query=from_tensor_query,
-                                    input_tensor_question=from_tensor_question,
-                                    encoder_args=encoder_args,
-                                    attention_mask=attention_mask)
+    tf_encoder_result = tf_encoder(input_tensor=from_tensor,
+                                   encoder_args=encoder_args,
+                                   attention_mask=attention_mask)
 
     encoder_variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
-    op_encoder_result = op_sbert_encoder(inputs_query=from_tensor_query,
-                                   inputs_question=from_tensor_question,
+    op_encoder_result = op_encoder(inputs=from_tensor,
                                    encoder_args=encoder_args,
                                    encoder_vars=encoder_variables,
                                    attention_mask=attention_mask)
@@ -105,10 +97,8 @@ if __name__ == "__main__":
         print("#################################")
         tf_encoder_result_val = sess.run(tf_encoder_result)
         op_encoder_result_val = sess.run(op_encoder_result)
-        cross_check("Query", tf_encoder_result_val[0],
-                    op_encoder_result_val[0], atol_threshold)
-        cross_check("Question", tf_encoder_result_val[1],
-                    op_encoder_result_val[1], atol_threshold)
+        cross_check("Encoder", tf_encoder_result_val,
+                    op_encoder_result_val, atol_threshold)
 
         if args.test_time == 1:
             ite = 100

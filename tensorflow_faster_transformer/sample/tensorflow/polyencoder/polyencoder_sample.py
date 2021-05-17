@@ -2,8 +2,8 @@ import tensorflow as tf
 import numpy as np
 import argparse
 import os
-from utils.common import TransformerArgument, time_test, cross_check
-from utils.encoder import tf_encoder, op_encoder, dot_product_attention
+from ..utils.common import TransformerArgument, time_test, cross_check
+from ..utils.encoder import tf_encoder, op_encoder, dot_product_attention
 # from opennmt.inputters import WordEmbedder
 
 def get_input_data(batch_size, seq_len, hidden_dim, poly_m):
