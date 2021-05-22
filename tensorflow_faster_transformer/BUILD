@@ -156,7 +156,7 @@ cc_binary(
     srcs = [
         "cc/kernels/bert_transformer_op.h",
         "cc/kernels/opennmt_transformer_op.h",
-	"cc/kernels/attention_op.h",
+	    "cc/kernels/attention_op.h",
         "cc/ops/bert_transformer_op.cc",
         "cc/ops/sentence_bert_transformer_op.cc",
         "cc/ops/opennmt_transformer_op.cc",

@@ -3,3 +3,4 @@ bazel-out
 __pycache__
 artifacts
 .bazelrc
+.vscode
