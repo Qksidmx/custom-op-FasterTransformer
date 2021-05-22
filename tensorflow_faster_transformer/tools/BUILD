@@ -14,7 +14,6 @@ cc_library(
             "-Wl,-rpath,../local_config_cuda/cuda/lib",
             "-Wl,-rpath,../local_config_cuda/cuda/extras/CUPTI/lib",
         ],
-        ":windows": [],
         "//conditions:default": [
             "-Wl,-rpath,../local_config_cuda/cuda/lib64",
             "-Wl,-rpath,../local_config_cuda/cuda/extras/CUPTI/lib64",
@@ -32,6 +31,7 @@ cc_binary(
     srcs = [
         "gemm_test/encoder_gemm.cc",
         "gemm_test/encoder_gemm.h",
+        "gemm_test/common.h",
     ],
     deps = if_cuda_is_configured([":cuda",  "@local_config_cuda//cuda:cuda_headers",  "@local_config_cuda//cuda:cublas_headers"]),
     copts = select({
