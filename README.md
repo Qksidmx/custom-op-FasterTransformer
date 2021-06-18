@@ -29,8 +29,6 @@ pip install xxx
 ## 速度测试
 ### BERT
 #### nvidia-2070s
-有了`gemm_config.in`文件之后，速度显著提升：
-
 ```bash
 # transformer config: seq_len=32, layers=12, heads=12, size_per_head=64
 # data type = fp32 
@@ -53,7 +51,6 @@ pip install xxx
 [INFO] TF decoder time costs: 6.07602 ms
 [INFO] OP decoder time costs: 4.69454 ms
 ```
-
 可见，推理时间缩短了几乎50%，这是非常高效的。
 
 ### OPENNMT-encoder-tf
@@ -100,8 +97,9 @@ pip install xxx
 [INFO] OP encoder time costs: 8.93003 ms
 ```
 ## Reference：
-[Custom-op](https://github.com/tensorflow/custom-op)
-[FasterTransformer](https://github.com/NVIDIA/FasterTransformer)
+[tensorflow/Custom-op](https://github.com/tensorflow/custom-op)
+
+[NVIDIA/FasterTransformer](https://github.com/NVIDIA/FasterTransformer)
 
 
 
@@ -235,91 +233,5 @@ bert_result = ft.bert_transformer(from_tensor, to_tensor,
 opennmt_result = ft.open_nmt_transformer(...)
 sbert_result = ft.sentence_bert_transformer(...)
 
-```
-
-## 速度测试
-
-### BERT
-#### nvidia-2070s
-
-有了`gemm_config.in`文件之后，速度显著提升：
-
-```bash
-# transformer config: seq_len=32, layers=12, heads=12, size_per_head=64
-# data type = fp32 
-# Device: nvidia-2070-Super
-[INFO] Encoder Cross check True
-[INFO] Max diff 4.05311584473e-06
-[INFO] min diff 0.0
-[INFO] TF decoder time costs: 26.06256 ms
-[INFO] OP decoder time costs: 14.17237 ms
-```
-
-#### nvidia-p100
-
-```bash
-# transformer config: seq_len=32, layers=12, heads=12, size_per_head=64
-# data type = fp32 
-# Device: nvidia-p100
-[INFO] Encoder Cross check True
-[INFO] Max diff 4.29153442383e-06
-[INFO] min diff 0.0
-[INFO] TF decoder time costs: 6.07602 ms
-[INFO] OP decoder time costs: 4.69454 ms
-```
-
-
-
-可见，推理时间缩短了几乎50%，这是非常高效的。
-
-### OPENNMT-encoder-tf
-
-#### nvidia-p100
-
-```bash
-# opennmt config: seq_len=128, beam_width=4, encoder_layers=6, encoder_heads=8, size_per_head=64, batch_size=1
-# data type = fp32 
-# Device: nvidia-Tesla-P100
-[INFO] Encoder Cross check True
-[INFO] Max diff 1.66893005371e-06
-[INFO] min diff 0.0
-[INFO] tf_opennmt_time: 5.88176 ms
-[INFO] op_opennmt_time: 3.50101 ms
-```
-
-### Sentence BERT
-
-#### nvidia-2070s
-
-```bash
-# transformer config: seq_len=32, layers=12, heads=12, size_per_head=64
-# data type = fp32 
-# Device: nvidia-2070-Super
-# py36+tf1.14
-[INFO] Query Cross check True
-[INFO] Max diff 4.887580871582031e-06
-[INFO] min diff 0.0
-[INFO] Question Cross check True
-[INFO] Max diff 4.76837158203125e-06
-[INFO] min diff 0.0
-[INFO] TF encoder time costs: 51.90491 ms
-[INFO] OP encoder time costs: 27.00781 ms
-```
-
-#### nvidia-p100
-
-```bash
-# transformer config: seq_len=32, layers=12, heads=12, size_per_head=64
-# data type = fp32 
-# Device: nvidia-tesla-P100
-# py36+tf1.14
-[INFO] Query Cross check True
-[INFO] Max diff 4.887580871582031e-06
-[INFO] min diff 0.0
-[INFO] Question Cross check True
-[INFO] Max diff 4.76837158203125e-06
-[INFO] min diff 0.0
-[INFO] TF encoder time costs: 9.94811 ms
-[INFO] OP encoder time costs: 8.93003 ms
 ```
 
