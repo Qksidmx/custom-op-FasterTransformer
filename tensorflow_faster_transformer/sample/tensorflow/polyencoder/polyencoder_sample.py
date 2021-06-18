@@ -4,6 +4,7 @@ import argparse
 import os
 from ..utils.common import TransformerArgument, time_test, cross_check
 from ..utils.encoder import tf_encoder, op_encoder, dot_product_attention
+import tensorflow_faster_transformer as ft
 # from opennmt.inputters import WordEmbedder
 
 def get_input_data(batch_size, seq_len, hidden_dim, poly_m):
@@ -132,8 +133,8 @@ if __name__ == "__main__":
     #     poly_code_ids = tf.range(poly_m, dtype=tf.int32)
     #     poly_code_ids = tf.tile(tf.expand_dims(poly_code_ids,0),(batch_size,1))
     #     poly_codes = tf.gather(pm_embedding_table, poly_code_ids)
-    transformer_op_module = tf.load_op_library(os.path.join('./lib/libtf_fastertransformer.so'))
-    op_embs = transformer_op_module.attention(poly_codes, op_ctx_out, op_ctx_out,
+    # transformer_op_module = tf.load_op_library(os.path.join('./lib/libtf_fastertransformer.so'))
+    op_embs = ft.attention(poly_codes, op_ctx_out, op_ctx_out,
                 batch_size=batch_size,q_seq_len=poly_m,hidden_size=hidden_dim,k_seq_len=seq_len,attention_type=1
               )
     # op_embs, _ = dot_product_attention(poly_codes, op_ctx_out, op_ctx_out, tf.estimator.ModeKeys.PREDICT)
