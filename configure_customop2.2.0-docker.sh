@@ -15,8 +15,8 @@
 # ==============================================================================
 PLATFORM="$(uname -s | tr 'A-Z' 'a-z')"
 PIP="pip3"
-TENSORFLOW_CPU="tensorflow"
-TENSORFLOW_GPU="tensorflow-gpu"
+# TENSORFLOW_CPU="tensorflow"
+TENSORFLOW_GPU="tensorflow"
 TF_CUDA_VERSION=10.1
 
 function write_to_bazelrc() {
