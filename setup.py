@@ -49,8 +49,8 @@ setup(
     name=project_name,
     version=__version__,
     description=('tensorflow-custom-ops is an examples for custom ops for TensorFlow'),
-    author='Google Inc.',
-    author_email='opensource@google.com',
+    author='pengyi',
+    author_email='hbyspy2008@qq.com',
     # Contained modules and scripts.
     packages=find_packages(),
     install_requires=REQUIRED_PACKAGES,
