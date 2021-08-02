@@ -14,10 +14,12 @@
 # limitations under the License.
 # ==============================================================================
 PLATFORM="$(uname -s | tr 'A-Z' 'a-z')"
+PIP="pip3"
+TENSORFLOW_CPU="tensorflow-cpu"
+TENSORFLOW_GPU="tensorflow"
 
-TENSORFLOW_CPU="tensorflow"
-TENSORFLOW_GPU="tensorflow-gpu"
-TF_CUDA_VERSION=10.1
+# TF_CUDA_VERSION=10.1
+# TF_CUDNN_VERSION=7
 
 function write_to_bazelrc() {
   echo "$1" >> .bazelrc
@@ -77,7 +79,28 @@ else
   done
 fi
 
-#while [[ "$TF_CUDA_VERSION" == "" ]]; do
+# set default tf cuda version and tf cudnn version according to tensorflow version
+if [[ "$TF_CUDA_VERSION" == "" ]]; then
+  TF_VERSION=$($PIP list --disable-pip-version-check|grep -w tensorflow |awk 'NR==1 {print $2}')
+  if [[ "$TF_VERSION" == 2.5* ]]; then
+    TF_CUDA_VERSION=11.2
+    TF_CUDNN_VERSION=8
+  elif [[ "$TF_VERSION" == 2.4* ]]; then
+    TF_CUDA_VERSION=11.0
+    TF_CUDNN_VERSION=8
+  elif [[ "$TF_VERSION" == 2.[123]* ]]; then
+    TF_CUDA_VERSION=10.1
+    TF_CUDNN_VERSION=7
+  else
+    TF_CUDA_VERSION=10.0
+    TF_CUDNN_VERSION=7
+  fi
+fi
+
+echo " TF_CUDA_VERSION = ${TF_CUDA_VERSION}, TF_CUDNN_VERSION = ${TF_CUDNN_VERSION}"
+
+# while [[ "$TF_CUDA_VERSION" == "" ]]; do
+
 #  read -p "Are you building against TensorFlow 2.1(including RCs) or newer?[Y/n] " INPUT
 #  case $INPUT in
 #    [Yy]* ) echo "Build against TensorFlow 2.1 or newer."; TF_CUDA_VERSION=10.1;;
@@ -85,51 +108,51 @@ fi
 #    "" ) echo "Build against TensorFlow 2.1 or newer."; TF_CUDA_VERSION=10.1;;
 #    * ) echo "Invalid selection: " $INPUT;;
 #  esac
-#done
+# done
 
 
 # CPU
 if [[ "$TF_NEED_CUDA" == "0" ]]; then
   # Check if it's installed
-  if [[ $(pip show ${TENSORFLOW_CPU}) == *${TENSORFLOW_CPU}* ]] || [[ $(pip show tf-nightly) == *tf-nightly* ]] ; then
+  if [[ $(${PIP} show ${TENSORFLOW_CPU}) == *${TENSORFLOW_CPU}* ]] || [[ $(${PIP}  show tf-nightly) == *tf-nightly* ]] ; then
     echo 'Using installed tensorflow CPU version'
   else
     # Uninstall GPU version if it is installed.
-    if [[ $(pip show ${TENSORFLOW_GPU}) == *${TENSORFLOW_GPU}* ]]; then
+    if [[ $(${PIP}  show ${TENSORFLOW_GPU}) == *${TENSORFLOW_GPU}* ]]; then
       echo 'Already have gpu version of tensorflow installed. Uninstalling......\n'
-      pip uninstall tensorflow-gpu
-    elif [[ $(pip show tf-nightly-gpu) == *tf-nightly-gpu* ]]; then
+      ${PIP}  uninstall tensorflow-gpu
+    elif [[ $(${PIP}  show tf-nightly-gpu) == *tf-nightly-gpu* ]]; then
       echo 'Already have gpu version of tensorflow installed. Uninstalling......\n'
-      pip uninstall tf-nightly-gpu
+      ${PIP}  uninstall tf-nightly-gpu
     fi
     # Install CPU version
     echo 'Installing tensorflow CPU version......\n'
-    pip install ${TENSORFLOW_CPU}
+    ${PIP}  install ${TENSORFLOW_CPU}
   fi
 
 # GPU
 else
   # Check if it's installed
-  if [[ $(pip show ${TENSORFLOW_GPU}) == *${TENSORFLOW_GPU}* ]] || [[ $(pip show tf-nightly-gpu) == *tf-nightly-gpu* ]]; then
+  if [[ $(${PIP}  show ${TENSORFLOW_GPU}) == *${TENSORFLOW_GPU}* ]] || [[ $(${PIP}  show tf-nightly-gpu) == *tf-nightly-gpu* ]]; then
     echo 'Using installed tensorflow GPU version'
   else
     # Uninstall CPU version if it is installed.
-    if [[ $(pip show ${TENSORFLOW_CPU}) == *${TENSORFLOW_CPU}* ]]; then
+    if [[ $(${PIP}  show ${TENSORFLOW_CPU}) == *${TENSORFLOW_CPU}* ]]; then
       echo 'Already have tensorflow CPU version installed. Uninstalling......\n'
-      pip uninstall tensorflow
-    elif [[ $(pip show tf-nightly) == *tf-nightly* ]]; then
+      ${PIP}  uninstall tensorflow
+    elif [[ $(${PIP}  show tf-nightly) == *tf-nightly* ]]; then
       echo 'Already have tensorflow CPU version installed. Uninstalling......\n'
-      pip uninstall tf-nightly
+      ${PIP}  uninstall tf-nightly
     fi
     # Install CPU version
     echo 'Installing tensorflow GPU version.....\n'
-    pip install ${TENSORFLOW_GPU}
+    ${PIP}  install ${TENSORFLOW_GPU}
   fi
 fi
 
 
-TF_CFLAGS="$(python -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_compile_flags()))')"
-TF_LFLAGS="$(python -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_link_flags()))')"
+TF_CFLAGS="$(python3 -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_compile_flags()))')"
+TF_LFLAGS="$(python3 -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_link_flags()))')"
 
 write_to_bazelrc "build:cuda --define=using_cuda=true --define=using_cuda_nvcc=true"
 if [[ "$PIP_MANYLINUX2010" == "0" ]]; then
@@ -137,8 +160,9 @@ if [[ "$PIP_MANYLINUX2010" == "0" ]]; then
 fi
 # Add Ubuntu toolchain flags
 if is_linux; then
-  write_to_bazelrc "build:manylinux2010cuda100 --crosstool_top=//third_party/toolchains/preconfig/ubuntu16.04/gcc7_manylinux2010-nvcc-cuda10.0:toolchain"
-  write_to_bazelrc "build:manylinux2010cuda101 --crosstool_top=//third_party/toolchains/preconfig/ubuntu16.04/gcc7_manylinux2010-nvcc-cuda10.1:toolchain"
+  write_to_bazelrc "build:manylinux2010cuda100 --crosstool_top=//build_deps/toolchains/gcc7_manylinux2010-nvcc-cuda10.0:toolchain"
+  write_to_bazelrc "build:manylinux2010cuda101 --crosstool_top=//build_deps/toolchains/gcc7_manylinux2010-nvcc-cuda10.1:toolchain"
+  write_to_bazelrc "build:manylinux2010cuda11 --crosstool_top=//build_deps/toolchains/gcc7_manylinux2010-nvcc-cuda11:toolchain"
 fi
 write_to_bazelrc "build --spawn_strategy=standalone"
 write_to_bazelrc "build --strategy=Genrule=standalone"
@@ -177,7 +201,7 @@ write_action_env_to_bazelrc "TF_NEED_CUDA" ${TF_NEED_CUDA}
 # TODO(yifeif): do not hardcode path
 if [[ "$TF_NEED_CUDA" == "1" ]]; then
   write_action_env_to_bazelrc "TF_CUDA_VERSION" ${TF_CUDA_VERSION}
-  write_action_env_to_bazelrc "TF_CUDNN_VERSION" "7"
+  write_action_env_to_bazelrc "TF_CUDNN_VERSION" ${TF_CUDNN_VERSION}
   if is_windows; then
     write_action_env_to_bazelrc "CUDNN_INSTALL_PATH" "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v${TF_CUDA_VERSION}"
     write_action_env_to_bazelrc "CUDA_TOOLKIT_PATH" "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v${TF_CUDA_VERSION}"
@@ -190,7 +214,10 @@ if [[ "$TF_NEED_CUDA" == "1" ]]; then
 fi
 
 if [[ "$PIP_MANYLINUX2010" == "1" ]]; then
-  if [[ "$TF_CUDA_VERSION" == "10.0" ]]; then
+  if [[ "$TF_CUDA_VERSION" == "11"* ]]; then
+    write_to_bazelrc "build --config=manylinux2010cuda11"
+    write_to_bazelrc "test --config=manylinux2010cuda11"
+  elif [[ "$TF_CUDA_VERSION" == "10.0" ]]; then
     write_to_bazelrc "build --config=manylinux2010cuda100"
     write_to_bazelrc "test --config=manylinux2010cuda100"
   else
@@ -198,3 +225,4 @@ if [[ "$PIP_MANYLINUX2010" == "1" ]]; then
     write_to_bazelrc "test --config=manylinux2010cuda101"
   fi
 fi
+

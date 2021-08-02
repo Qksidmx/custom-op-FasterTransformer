@@ -1,6 +1,5 @@
-bazel-bin
-bazel-out
+bazel-*
 __pycache__
-artifacts
+artifact*
 .bazelrc
 .vscode
